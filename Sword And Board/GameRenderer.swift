@@ -21,7 +21,7 @@ enum RendererError: Error {
     case badVertexDescriptor
 }
 
-class Renderer: NSObject, MTKViewDelegate {
+class GameRenderer: NSObject, MTKViewDelegate {
 
     public let device: MTLDevice
     let commandQueue: MTLCommandQueue
@@ -61,10 +61,10 @@ class Renderer: NSObject, MTKViewDelegate {
         metalKitView.colorPixelFormat = MTLPixelFormat.bgra8Unorm_srgb
         metalKitView.sampleCount = 1
 
-        let mtlVertexDescriptor = Renderer.buildMetalVertexDescriptor()
+        let mtlVertexDescriptor = GameRenderer.buildMetalVertexDescriptor()
 
         do {
-            pipelineState = try Renderer.buildRenderPipelineWithDevice(device: device,
+            pipelineState = try GameRenderer.buildRenderPipelineWithDevice(device: device,
                                                                        metalKitView: metalKitView,
                                                                        mtlVertexDescriptor: mtlVertexDescriptor)
         } catch {
@@ -78,14 +78,14 @@ class Renderer: NSObject, MTKViewDelegate {
         self.depthState = device.makeDepthStencilState(descriptor:depthStateDesciptor)!
 
         do {
-            mesh = try Renderer.buildMesh(device: device, mtlVertexDescriptor: mtlVertexDescriptor)
+            mesh = try GameRenderer.buildMesh(device: device, mtlVertexDescriptor: mtlVertexDescriptor)
         } catch {
             print("Unable to build MetalKit Mesh. Error info: \(error)")
             return nil
         }
 
         do {
-            colorMap = try Renderer.loadTexture(device: device, textureName: "ColorMap")
+            colorMap = try GameRenderer.loadTexture(device: device, textureName: "ColorMap")
         } catch {
             print("Unable to load texture. Error info: \(error)")
             return nil
