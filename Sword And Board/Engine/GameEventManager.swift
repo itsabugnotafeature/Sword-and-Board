@@ -8,7 +8,11 @@
 
 class GameEventManager {
     
-    init() {
-        return
+    let engine: GameEngine
+    
+    init(withEngine engine: GameEngine) {
+        self.engine = engine
     }
+    
+    
 }

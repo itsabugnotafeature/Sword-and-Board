@@ -9,30 +9,33 @@ import MetalKit
 
 class GameEngine: NSObject, MTKViewDelegate {
     
-    let renderer: GameRenderer!
-    let ecsEngine: GameECSManager!
-    let eventManager: GameEventManager!
+    var renderer: GameRenderer?
+    var ecsEngine: GameECSManager?
+    var eventManager: GameEventManager?
+    var audioPlayer: GameAudio?
     
     init?(mtkView: MTKView) {
         
+        super.init()
+        
         if let newRenderer = GameRenderer(metalKitView: mtkView) {
             renderer = newRenderer
-            renderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
+            renderer?.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
         } else {
             fatalError("Unable to initialize renderer")
         }
         
-        ecsEngine = GameECSManager()
-        eventManager = GameEventManager()
+        ecsEngine = GameECSManager(withEngine: self)
+        eventManager = GameEventManager(withEngine: self)
+        audioPlayer = GameAudio(withEngine: self)
         
-        super.init()
     }
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        return
+        renderer?.mtkView(view, drawableSizeWillChange: size)
     }
     
     func draw(in view: MTKView) {
-        renderer.draw(in: view)
+        renderer?.draw(in: view)
     }
 }
