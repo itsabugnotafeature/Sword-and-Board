@@ -8,7 +8,7 @@
 
 class GameEventManager {
     
-    let engine: GameEngine
+    weak var engine: GameEngine?
     
     init(withEngine engine: GameEngine) {
         self.engine = engine

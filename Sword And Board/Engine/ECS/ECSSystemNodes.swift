@@ -6,14 +6,6 @@
 //  Copyright © 2018 Max Sonderegger. All rights reserved.
 //
 
-class ECSSystemNode {
-    var components: [ECSComponent]
+class ECSIdentityNode {
     
-    init(withComponents components: ECSComponent ...) {
-        self.components = components
-    }
-    
-    init(withComponents components: [ECSComponent]) {
-        self.components = components
-    }
 }

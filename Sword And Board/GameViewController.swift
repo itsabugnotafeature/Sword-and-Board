@@ -12,7 +12,7 @@ import MetalKit
 // Our macOS specific view controller
 class GameViewController: NSViewController {
 
-    var engine: GameEngine!
+    var game: Game?
     var mtkView: MTKView!
 
     override func viewDidLoad() {
@@ -22,6 +22,10 @@ class GameViewController: NSViewController {
             print("View attached to GameViewController is not an MTKView")
             return
         }
+        
+        mtkView.colorPixelFormat = .bgra8Unorm
+        mtkView.depthStencilPixelFormat = .depth32Float
+        mtkView.clearColor = MTLClearColorMake(0.4, 0.5, 0.8, 0)
 
         // Select the device to render with.  We choose the default device
         guard let defaultDevice = MTLCreateSystemDefaultDevice() else {
@@ -31,13 +35,13 @@ class GameViewController: NSViewController {
 
         mtkView.device = defaultDevice
 
-        guard let newEngine = GameEngine(mtkView: mtkView) else {
+        guard let newGame = Game(mtkView: mtkView) else {
             print("Engine cannot be initialized")
             return
         }
 
-        engine = newEngine
-
-        mtkView.delegate = engine
+        game = newGame
+        
+        mtkView.delegate = game
     }
 }

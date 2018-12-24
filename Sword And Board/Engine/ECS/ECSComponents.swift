@@ -5,23 +5,37 @@
 //  Created by Max Sonderegger on 11/14/18.
 //  Copyright © 2018 Max Sonderegger. All rights reserved.
 //
-import simd
-import Metal
 
-struct ECSComponentType: OptionSet {
-    let rawValue: Int
+enum ECSComponentType {
     
-    static let NoComponent = 0
-    static let Position = 1 << 0
-    static let EntityState = 1 << 1
-    static let Animatable = 1 << 2
+    //There should be one case corresponding to each component type
+    case Identifiable
+    case Renderable
+    case Damagable
 }
 
-class ECSComponent {
+protocol ECSComponent {
     
-    let type: ECSComponentType
+    var type: ECSComponentType? { get }
     
-    init(withType type: ECSComponentType) {
-        self.type = type
+    func printInfo()
+    
+}
+
+struct Identifiable: ECSComponent {
+    var type: ECSComponentType? = .Identifiable
+    
+    var name: String?
+    
+    func printInfo() {
+        print(name ?? "No name provided for \(self)")
+    }
+}
+
+struct Renderable: ECSComponent {
+    var type: ECSComponentType? = .Renderable
+    
+    func printInfo() {
+        return
     }
 }

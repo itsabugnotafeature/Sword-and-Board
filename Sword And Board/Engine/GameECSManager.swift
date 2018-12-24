@@ -5,70 +5,40 @@
 //  Created by Max Sonderegger on 11/13/18.
 //  Copyright © 2018 Max Sonderegger. All rights reserved.
 //
+typealias ECSEntity = Int
 
-class GameECSManager {
+class GameECSManager: ContainsEntities {
     
-    let MAX_ENTITY_COUNT = 100
-    var entityCount = 0
+    var entityCount: Int { return entityManager.entityCount }
     
-    let engine: GameEngine
+    weak var engine: GameEngine?
     
+    private let entityManager: ECSEntityManager = ECSEntityManager()
     var systems: [ECSSystemPriorities: [ECSSystem]] = [:]
-    var entityMasks: [Int : ECSComponentType] = [:]
-    var entityComponents: [Int : [ECSComponent]] = [:]
     
     init(withEngine engine: GameEngine) {
         self.engine = engine
     }
     
-    func addSystem(_ system: ECSSystem, withPriority priority: ECSSystemPriorities) -> Bool {
+    @discardableResult func addSystem(_ system: ECSSystem, withPriority priority: ECSSystemPriorities) -> Bool {
         if system.start() {
-            systems[priority]?.append(system)
+            system.entityManager = self.entityManager
+            if systems[priority] != nil {
+                systems[priority]!.append(system)
+            } else {
+                systems[priority] = [system]
+            }
+            return true
         } else {
             return false
         }
-        
-        for (id, componentMask) in entityMasks {
-            if system.accepts(componentMask) {
-                system.addEntity(withComponents: entityComponents[id]!, withId: id)
-            }
-        }
-        return true
     }
     
-    func addEntity(withComponents compenentMask: ECSComponentType) -> Int {
-        let entityID = entityCount
-        entityMasks[entityID] = compenentMask
-        entityCount += 1
-        entityComponents[entityID] = []
-        
-        for (priorityLevel, _) in systems {
-            for system in systems[priorityLevel]! {
-                if system.accepts(compenentMask) {
-                    system.addEntity(withComponents: [], withId: entityID)
-                }
-            }
-        }
-        
-        return entityID
-    }
-    
-    func addComponents(_ components: [ECSComponent], toEntity id: Int) {
-        entityComponents[id]?.append(contentsOf: components)
-        for component in components {
-            entityMasks[id]?.formUnion(component.type)
-        }
-        for (priorityLevel, _) in systems {
-            for system in systems[priorityLevel]! {
-                system.changed(entity: id, componentsMask: entityMasks[id]!)
-            }
-        }
-    }
-    
-    func removeSystem(_ systemToBeRemoved: ECSSystem) -> Bool {
+    @discardableResult func removeSystem(_ systemToBeRemoved: ECSSystem) -> Bool {
         for (_, var systemList) in systems {
             for index in 0..<systemList.count {
-                if systemList[index] === systemToBeRemoved && systemList[index].stop() {
+                if systemList[index] === systemToBeRemoved {
+                    systemList.remove(at: index)
                     return true
                 }
             }
@@ -76,38 +46,38 @@ class GameECSManager {
         return false
     }
     
-    func removeEntity(withID id: Int) {
-        entityCount -= 1
-        entityMasks.removeValue(forKey: id)
-        entityComponents.removeValue(forKey: id)
-        
-        for (priorityLevel, _) in systems {
-            for system in systems[priorityLevel]! {
-                system.removeEntity(withId: id)
-            }
-        }
-    }
-    
-    func removeComponents(ofTypes types: [ECSComponentType], fromEntity id: Int) {
-        for type in types {
-            entityMasks[id]?.remove(type)
-        }
-        
-        entityComponents.removeValue(forKey: id)
-        
-        for (priorityLevel, _) in systems {
-            for system in systems[priorityLevel]! {
-                system.changed(entity: id, componentsMask: entityMasks[id]!)
-            }
-        }
-    }
-    
     func update(afterTime dt: TimeInterval) {
+        entityManager.update()
         for (_, systemList) in systems {
             for system in systemList {
                 system.update(afterTime: dt)
             }
         }
     }
+    
+    func appendComponent(_ component: ECSComponent, toEntity entity: ECSEntity) {
+        entityManager.appendComponent(component, toEntity: entity)
+    }
+    
+    func removeComponent(ofType type: ECSComponentType, from entity: ECSEntity) {
+        entityManager.removeComponent(ofType: type, from: entity)
+    }
+    
+    func addEntity() -> ECSEntity {
+        return entityManager.addEntity()
+    }
+    
+    func addEntityWithComponents(_ components: [ECSComponent]) -> ECSEntity {
+        return entityManager.addEntityWithComponents(components)
+    }
+    
+    func removeEntity(_ entity: ECSEntity) {
+        entityManager.removeEntity(entity)
+    }
+    
+    func typeOfEntity(_ entity: ECSEntity) -> ECSEntityType {
+        return entityManager.typeOfEntity(entity)
+    }
+    
 
 }

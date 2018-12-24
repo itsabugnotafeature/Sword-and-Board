@@ -5,74 +5,33 @@
 //  Created by Max Sonderegger on 11/14/18.
 //  Copyright © 2018 Max Sonderegger. All rights reserved.
 //
-class ECSSystem {
-    let componentMask: ECSComponentType
+ protocol ECSSystem: AnyObject {
+    var entityType: ECSEntityType { get }
     
-    var nodes: [Int : ECSSystemNode] = [:]
+    var entityManager: ECSEntityManager? { get set }
     
-    init(withComponentMask componentMask: ECSComponentType) {
-        
-        self.componentMask = componentMask
-        
-    }
+    @discardableResult func start() -> Bool
     
-    func accepts(_ componentMask: ECSComponentType) -> Bool {
-        if (componentMask.isSuperset(of: self.componentMask)) {
-            return true
-        }
-        return false
-    }
+    func update(afterTime: TimeInterval)
     
-    func addEntity(withComponents components: [ECSComponent], withId id: Int) {
-        return
-    }
+    @discardableResult func pause() -> Bool
     
-    func changed(entity: Int, componentsMask: ECSComponentType) {
-        return
-    }
-    
-    func removeEntity(withId id: Int) {
-        return
-    }
-    
-    func start() -> Bool {
-        return false
-    }
-    
-    func update(afterTime: TimeInterval) {
-        return
-    }
-    
-    func pause() -> Bool {
-        return false
-    }
-    
-    func stop() -> Bool {
-        return false
-    }
-    
+    @discardableResult func stop() -> Bool
 }
 
-class ECSExtensibleSystem: ECSSystem {
-    
-    let updateFunction: (TimeInterval) -> Void
-    
-    init(withComponentMask componentMask: ECSComponentType, withUpdateFunction updateFunction: @escaping (TimeInterval) -> Void) {
-        
-        self.updateFunction = updateFunction
-        super.init(withComponentMask: componentMask)
-        
-    }
-    
-    override func update(afterTime dt: TimeInterval) {
-        self.updateFunction(dt)
-    }
-}
+/**
+Used by ECSSystems to iterate over their respective components
+ - Parameters:
+    - components : A large array containing all the components from an `ECSEntityManager`.
+    - indices :A dictionary with the indices of the components needed, grouped by component type. They are in order by entity, so the first component in one array, corresponds with the first component from the other and so on.
+ */
+
+typealias ECSSystemComponentIterator = (_ components: inout [ECSComponent?], _ indices: [ECSComponentType : [ECSEntity : Int]]) -> Void
 
 enum ECSSystemPriorities {
     
+    case userInitiated
+    case deferrable
     case background
-    case deferred
-    case userInteractions
     
 }

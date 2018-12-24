@@ -7,35 +7,65 @@
 //
 import MetalKit
 
-class GameEngine: NSObject, MTKViewDelegate {
-    
-    var renderer: GameRenderer?
-    var ecsEngine: GameECSManager?
+class GameEngine: NSObject, MTKViewDelegate, ContainsEntities {
+    var ecsManager: GameECSManager?
     var eventManager: GameEventManager?
-    var audioPlayer: GameAudio?
+    
+    var currentDelta: TimeInterval = 0
+    var lastFrameTime: DispatchTime = DispatchTime.now()
+    
+    var entityCount: Int { return (ecsManager?.entityCount)! }
     
     init?(mtkView: MTKView) {
         
         super.init()
         
-        if let newRenderer = GameRenderer(metalKitView: mtkView) {
-            renderer = newRenderer
-            renderer?.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
-        } else {
-            fatalError("Unable to initialize renderer")
-        }
-        
-        ecsEngine = GameECSManager(withEngine: self)
+        ecsManager = GameECSManager(withEngine: self)
         eventManager = GameEventManager(withEngine: self)
-        audioPlayer = GameAudio(withEngine: self)
+        
+        ecsManager?.addSystem(RenderSystem(withView: mtkView, andDevice: mtkView.device!), withPriority: .userInitiated)
+        ecsManager?.addSystem(IdentifiableSystem(), withPriority: .userInitiated)
+        var testComp: Identifiable = Identifiable()
+        testComp.name = "Max"
+        var anotherComp = Identifiable()
+        anotherComp.name = "Myana"
+        let anotherComp2 = Renderable()
+        _ = ecsManager?.addEntityWithComponents([testComp])
+        _ = ecsManager?.addEntityWithComponents([anotherComp, anotherComp2])
         
     }
     
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        renderer?.mtkView(view, drawableSizeWillChange: size)
+        //code
     }
     
     func draw(in view: MTKView) {
-        renderer?.draw(in: view)
+        currentDelta = Double(DispatchTime.now().uptimeNanoseconds - lastFrameTime.uptimeNanoseconds)
+        ecsManager?.update(afterTime: currentDelta)
+        lastFrameTime = DispatchTime.now()
+    }
+    
+    func appendComponent(_ component: ECSComponent, toEntity entity: ECSEntity) {
+        ecsManager?.appendComponent(component, toEntity: entity)
+    }
+    
+    func removeComponent(ofType type: ECSComponentType, from entity: ECSEntity) {
+        ecsManager?.removeComponent(ofType: type, from: entity)
+    }
+    
+    func addEntity() -> ECSEntity {
+        return (ecsManager?.addEntity())!
+    }
+    
+    func addEntityWithComponents(_ components: [ECSComponent]) -> ECSEntity {
+        return (ecsManager?.addEntityWithComponents(components))!
+    }
+    
+    func removeEntity(_ entity: ECSEntity) {
+        ecsManager?.removeEntity(entity)
+    }
+    
+    func typeOfEntity(_ entity: ECSEntity) -> ECSEntityType {
+        return (ecsManager?.typeOfEntity(entity))!
     }
 }
